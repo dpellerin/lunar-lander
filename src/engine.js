@@ -305,10 +305,7 @@ function simulateTick(game, input, dt) {
     game.ship.angle += game.ship.angularVelocity * dt;
   } else {
     game.ship.angularVelocity = rotate * 1.4;
-    game.ship.angle = Math.max(
-      -Math.PI / 2,
-      Math.min(Math.PI / 2, game.ship.angle + game.ship.angularVelocity * dt),
-    );
+    game.ship.angle += game.ship.angularVelocity * dt;
   }
   game.ship.throttle = thrust;
   game.fuel = Math.max(0, game.fuel - requestedFuel);

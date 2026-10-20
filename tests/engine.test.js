@@ -175,7 +175,7 @@ test("thrust opposes gravity proportionally and burns nine fuel per full-thrust 
   assert.equal(powered.ship.throttle, 0);
 });
 
-test("rotation uses fuel, tilts thrust and stops at assisted ninety-degree limits", () => {
+test("rotation uses fuel and tilts thrust", () => {
   const game = engine.createGame();
   engine.startGame(game);
   fly(game, { rotate: 1 });
@@ -184,14 +184,29 @@ test("rotation uses fuel, tilts thrust and stops at assisted ninety-degree limit
   const vx = game.ship.vx;
   fly(game, { thrust: 1 }, 0.25);
   assert.ok(game.ship.vx > vx);
-  fly(game, { rotate: 1 }, 4);
-  assert.ok(game.ship.angle <= Math.PI / 2);
-  const left = engine.createGame();
-  engine.startGame(left);
-  fly(left, { rotate: -1 }, 0.25);
-  assert.ok(left.ship.angle < 0, "left is negative; right is positive");
-  fly(game, { rotate: -1 }, 5);
-  assert.ok(game.ship.angle >= -Math.PI / 2);
+});
+
+test("assisted difficulties allow repeated full rotations in either direction and stop on release", () => {
+  for (const difficulty of ["training", "cadet", "prime"]) {
+    for (const rotate of [-1, 1]) {
+      const game = engine.createGame({ difficulty, seed: 12345 });
+      engine.startGame(game);
+      game.terrain = [
+        { x: 0, y: 1000 },
+        { x: 1600, y: 1000 },
+      ];
+      Object.assign(game.ship, { x: 800, y: 80, vx: 0 });
+      fly(game, { rotate }, 10);
+      assert.equal(game.phase, "flying");
+      assert.ok(rotate * game.ship.angle > 4 * Math.PI);
+      assert.ok(Math.abs(game.fuel - 742) < 1e-8);
+      const { angle } = game.ship;
+      fly(game, {}, 0.25);
+      assert.equal(game.ship.angle, angle);
+      assert.equal(game.ship.angularVelocity, 0);
+      assert.ok(Math.abs(game.fuel - 742) < 1e-8);
+    }
+  }
 });
 
 test("empty tanks disable controls but keep ballistic flight until impact", () => {

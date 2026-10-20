@@ -378,8 +378,9 @@ function updateUI() {
   overlay.classList.toggle("round-result", finished);
   overlay.hidden = flying && !paused;
   const controllerConnected = Boolean(controllerState.supported);
-  $(".overlay-eyebrow").hidden = game.phase === "ready";
-  $("#overlay-message").hidden = game.phase === "ready";
+  const minimalOverlay = game.phase === "ready" || (paused && flying);
+  $(".overlay-eyebrow").hidden = minimalOverlay;
+  $("#overlay-message").hidden = minimalOverlay;
   if (game.phase === "ready") {
     $("#overlay-hint").textContent = controllerConnected
       ? "PRESS A TO BEGIN"
@@ -392,14 +393,12 @@ function updateUI() {
     button = $("#launch-button"),
     hint = $("#overlay-hint");
   $(".overlay-eyebrow").textContent =
-    paused && flying
-      ? "FLIGHT ON HOLD"
-      : game.phase === "gameover"
-        ? "FUEL SUPPLY EXHAUSTED"
-        : `MISSION ${pad(game.mission, 2)} / ${game.result?.kind === "crash" ? "SURFACE IMPACT" : "TOUCHDOWN"}`;
+    game.phase === "gameover"
+      ? "FUEL SUPPLY EXHAUSTED"
+      : `MISSION ${pad(game.mission, 2)} / ${game.result?.kind === "crash" ? "SURFACE IMPACT" : "TOUCHDOWN"}`;
   if (paused && flying) {
     title.textContent = "FLIGHT PAUSED";
-    message.textContent = "Take a breath. The Moon can wait.";
+    message.textContent = "";
     button.innerHTML = "RESUME FLIGHT <span>↵</span>";
     button.setAttribute("aria-label", "Resume flight");
     hint.textContent = controllerConnected
