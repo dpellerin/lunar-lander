@@ -229,7 +229,16 @@ test("responsive canvas has no horizontal overflow and HUD columns never overlap
     [844, 390],
   ]) {
     await page.setViewportSize({ width, height });
-    await page.waitForTimeout(80);
+    await expect
+      .poll(() =>
+        page.locator("canvas").evaluate((canvas) => {
+          const expectedWidth = Math.round(
+            canvas.clientWidth * Math.min(2, devicePixelRatio),
+          );
+          return Math.abs(canvas.width - expectedWidth) <= 1;
+        }),
+      )
+      .toBe(true);
     const layout = await page.evaluate(() => {
       const l = document
           .querySelector(".telemetry-left")

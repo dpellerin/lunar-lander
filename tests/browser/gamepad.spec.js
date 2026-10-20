@@ -254,7 +254,7 @@ test("Xbox trigger directly controls thrust and stick/D-pad steer the ship", asy
 test("held A does not relaunch after a crash and X cannot add fuel", async ({
   page,
 }) => {
-  test.setTimeout(45000);
+  test.setTimeout(process.env.CI ? 135000 : 45000);
   await setup(page);
   await button(page, 0, 1);
   await page.clock.runFor(22000);

@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test("three consecutive rounds render distinct faceted terrain while flight resources carry", async ({
   page,
 }) => {
-  test.setTimeout(60000);
+  test.setTimeout(process.env.CI ? 180000 : 60000);
   await page.addInitScript(() => {
     Math.random = () => 7 / 4294967296;
   });
