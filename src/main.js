@@ -28,6 +28,7 @@ let controllerSoundAttempted = false;
 let renderer,
   paused = false,
   helpOpen = false,
+  restartOpen = false,
   accumulator = 0,
   lastTime = 0,
   previousPhase = game.phase,
@@ -121,6 +122,14 @@ app.innerHTML = `
         </tbody>
       </table>
     </details></dialog>
+  <dialog id="restart-confirmation" aria-labelledby="restart-title" aria-describedby="restart-warning">
+    <h2 id="restart-title">Restart game?</h2>
+    <p id="restart-warning">This resets your score, fuel, and mission progress.</p>
+    <div class="restart-actions">
+      <button id="cancel-restart" autofocus>CANCEL <span class="restart-cancel-key" hidden>B</span></button>
+      <button id="confirm-restart">RESTART GAME <span class="restart-confirm-key" hidden>A</span></button>
+    </div>
+  </dialog>
 `;
 
 const $ = (selector) => document.querySelector(selector);
@@ -210,6 +219,28 @@ function restart() {
   announce("New game started.");
   updateUI();
 }
+function requestRestart() {
+  if (restartOpen) return;
+  restartOpen = true;
+  clearInput();
+  suspendController();
+  accumulator = 0;
+  $("#restart-confirmation").showModal();
+  $("#cancel-restart").focus();
+}
+function closeRestart() {
+  $("#restart-confirmation").close();
+  restartOpen = false;
+  clearInput();
+  suspendController();
+  accumulator = 0;
+  lastTime = performance.now() / 1000;
+}
+function confirmRestart() {
+  if (!restartOpen) return;
+  closeRestart();
+  restart();
+}
 function showPreferences() {
   helpOpen = true;
   suspendController();
@@ -237,7 +268,13 @@ function setThrottle(value) {
   $("#throttle-label").value = `${Math.round(throttle * 100)}%`;
 }
 $("#launch-button").addEventListener("click", launch);
-$("#restart-button").addEventListener("click", restart);
+$("#restart-button").addEventListener("click", requestRestart);
+$("#cancel-restart").addEventListener("click", closeRestart);
+$("#confirm-restart").addEventListener("click", confirmRestart);
+$("#restart-confirmation").addEventListener("cancel", (event) => {
+  event.preventDefault();
+  closeRestart();
+});
 $("#preferences-button").addEventListener("click", showPreferences);
 $("#close-preferences").addEventListener("click", closePreferences);
 $("#preferences").addEventListener("cancel", (event) => {
@@ -291,6 +328,7 @@ const gameKeys = new Set([
   "ShiftRight",
 ]);
 window.addEventListener("keydown", (event) => {
+  if (restartOpen) return;
   if (
     ["audio-unlock", "restart-button"].includes(event.target?.id) &&
     (event.code === "Enter" || event.code === "Space")
@@ -300,7 +338,7 @@ window.addEventListener("keydown", (event) => {
   if (["INPUT", "SELECT", "TEXTAREA"].includes(tag)) return;
   if (event.code === "KeyR") {
     event.preventDefault();
-    if (!event.repeat) restart();
+    if (!event.repeat) requestRestart();
     return;
   }
   if (helpOpen) return;
@@ -495,6 +533,8 @@ function updateControllerUI() {
   $("#controller-meter").value = state.thrust;
   $("#controller-percent").value = `${Math.round(state.thrust * 100)}%`;
   $("#restart-key").textContent = state.supported ? "X" : "R";
+  $(".restart-confirm-key").hidden = !state.supported;
+  $(".restart-cancel-key").hidden = !state.supported;
   updateAudioUI();
 }
 
@@ -538,8 +578,13 @@ function pollController() {
     unlock();
   }
   for (const action of controllerState.actions) {
+    if (restartOpen) {
+      if (action === "launch") confirmRestart();
+      else if (action === "abort" || action === "pause") closeRestart();
+      break;
+    }
     if (action === "restart") {
-      restart();
+      requestRestart();
       break;
     }
     if (helpOpen) {
@@ -562,7 +607,7 @@ function frame(timestamp) {
   const now = timestamp / 1000;
   const elapsed = lastTime ? Math.min(0.1, Math.max(0, now - lastTime)) : 0;
   lastTime = now;
-  if (!paused && !helpOpen) {
+  if (!paused && !helpOpen && !restartOpen) {
     accumulator += elapsed;
     const input = {
       rotate:
@@ -597,9 +642,9 @@ function frame(timestamp) {
   audio.update(
     game.ship.throttle || 0,
     game.fuel < 100,
-    game.phase === "flying" && !paused && !helpOpen,
+    game.phase === "flying" && !paused && !helpOpen && !restartOpen,
   );
-  renderer.render(game, { now, paused: paused || helpOpen });
+  renderer.render(game, { now, paused: paused || helpOpen || restartOpen });
   uiTimer += elapsed;
   if (uiTimer > 0.08) {
     uiTimer = 0;

@@ -24,6 +24,8 @@ For an Xbox controller, pair it with your device, then press any button to conne
 
 Touch controls are available on smaller screens. Open **Preferences** for vector glow, the full controls table and scoring. Sound is always enabled. **Click for Sound** on the splash screen unlocks audio before you launch with a controller.
 
+Restart asks for confirmation before resetting your game. On a controller, press **A** to confirm or **B** to cancel.
+
 ## Scoring
 
 - **Soft landing:** 50 points × the pad bonus, plus 50 fuel.

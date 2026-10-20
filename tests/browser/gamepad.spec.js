@@ -266,7 +266,7 @@ test("held A does not relaunch after a crash", async ({ page }) => {
   expect((await diagnostics(page)).mission).toBe(2);
 });
 
-test("X restarts from flight and Preferences once per press and waits for neutral inputs", async ({
+test("X warns before restarting; B cancels and a fresh A confirms after release", async ({
   page,
 }) => {
   await setup(page);
@@ -274,6 +274,23 @@ test("X restarts from flight and Preferences once per press and waits for neutra
   await button(page, 7, 1);
   const before = await diagnostics(page);
   await button(page, 2, 1);
+  await expect(page.locator("#restart-confirmation")).toBeVisible();
+  const warned = await diagnostics(page);
+  expect(warned.terrainSeed).toBe(before.terrainSeed);
+  expect(warned.fuel).toBeLessThanOrEqual(before.fuel);
+  expect(warned.score).toBe(before.score);
+  await page.clock.runFor(300);
+  expect((await diagnostics(page)).ship).toEqual(warned.ship);
+  expect((await diagnostics(page)).fuel).toBe(warned.fuel);
+  await button(page, 0, 1);
+  await expect(page.locator("#restart-confirmation")).toBeVisible();
+  for (const index of [0, 2, 7]) await button(page, index, 0);
+  await press(page, 1);
+  await expect(page.locator("#restart-confirmation")).toBeHidden();
+  expect((await diagnostics(page)).terrainSeed).toBe(before.terrainSeed);
+  expect((await diagnostics(page)).fuel).toBe(warned.fuel);
+  await press(page, 2);
+  await press(page, 0);
   const reset = await diagnostics(page);
   expect(reset.phase).toBe("flying");
   expect(reset.score).toBe(0);
@@ -284,11 +301,15 @@ test("X restarts from flight and Preferences once per press and waits for neutra
   await page.clock.runFor(300);
   expect((await diagnostics(page)).terrainSeed).toBe(reset.terrainSeed);
   expect((await diagnostics(page)).fuel).toBe(750);
-  await button(page, 2, 0);
-  await button(page, 7, 0);
   await press(page, 3);
   await expect(page.locator("#preferences")).toBeVisible();
   await press(page, 2);
+  await expect(page.locator("#restart-confirmation")).toBeVisible();
+  await press(page, 1);
+  await expect(page.locator("#preferences")).toBeVisible();
+  expect((await diagnostics(page)).terrainSeed).toBe(reset.terrainSeed);
+  await press(page, 2);
+  await press(page, 0);
   await expect(page.locator("#preferences")).toBeHidden();
   expect((await diagnostics(page)).terrainSeed).not.toBe(reset.terrainSeed);
   await expect(page.locator("#restart-key")).toHaveText("X");

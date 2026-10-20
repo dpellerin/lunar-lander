@@ -565,6 +565,36 @@ dialog p {
   line-height: 1.8;
   color: #a1af97;
 }
+#restart-confirmation {
+  max-width: 460px;
+}
+#restart-confirmation h2 {
+  margin-top: 0;
+  font-size: 32px;
+}
+.restart-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+.restart-actions button {
+  flex: 1;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--dim);
+  background: transparent;
+  color: var(--ink);
+  font: 11px var(--mono);
+}
+.restart-actions button:hover,
+.restart-actions button:focus-visible {
+  background: #c4d49113;
+  border-color: var(--accent);
+}
+.restart-actions span {
+  margin-left: 8px;
+  color: var(--accent);
+}
 .reference-table {
   width: 100%;
   table-layout: fixed;

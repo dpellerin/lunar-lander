@@ -10,6 +10,11 @@ test("restart button and R start fresh games from the splash, pause and Preferen
   await page.getByRole("button", { name: "Prime", exact: true }).click();
   const initial = await snapshot();
   await page.getByRole("button", { name: "Restart game", exact: true }).click();
+  await expect(
+    page.getByRole("dialog", { name: "Restart game?" }),
+  ).toBeVisible();
+  expect((await snapshot()).terrainSeed).toBe(initial.terrainSeed);
+  await page.locator("#confirm-restart").click();
   await page.clock.runFor(100);
   const restarted = await snapshot();
   expect(restarted.phase).toBe("flying");
@@ -18,6 +23,7 @@ test("restart button and R start fresh games from the splash, pause and Preferen
   await page.clock.runFor(500);
   await page.keyboard.press("P");
   await page.keyboard.press("R");
+  await page.locator("#confirm-restart").click();
   await page.clock.runFor(100);
   const reset = await snapshot();
   expect(reset.paused).toBe(false);
@@ -30,12 +36,15 @@ test("restart button and R start fresh games from the splash, pause and Preferen
   await page.keyboard.up("Space");
   await page.getByRole("button", { name: "Preferences", exact: true }).click();
   await page.keyboard.press("R");
+  await page.locator("#confirm-restart").click();
   await page.clock.runFor(100);
   await expect(page.locator("#preferences")).toBeHidden();
   expect((await snapshot()).terrainSeed).not.toBe(reset.terrainSeed);
   await page.locator("#restart-button").focus();
   const seedBeforeEnter = (await snapshot()).terrainSeed;
   await page.keyboard.press("Enter");
+  await expect(page.locator("#restart-confirmation")).toBeVisible();
+  await page.locator("#confirm-restart").click();
   await page.clock.runFor(100);
   expect((await snapshot()).terrainSeed).not.toBe(seedBeforeEnter);
   expect((await snapshot()).paused).toBe(false);
@@ -55,6 +64,43 @@ test("restart button and R start fresh games from the splash, pause and Preferen
     });
     expect(layout).toEqual({ clear: true, overflow: false });
   }
+});
+
+test("restart warning freezes flight and cancelling preserves progress and pause state", async ({
+  page,
+}) => {
+  await page.clock.install();
+  await page.goto("/");
+  await page.keyboard.press("Enter");
+  await page.keyboard.down("Space");
+  await page.clock.runFor(500);
+  await page.keyboard.up("Space");
+  await page.keyboard.press("R");
+  const snapshot = () => page.evaluate(() => window.lunarDiagnostics());
+  const before = await snapshot();
+  await expect(page.locator("#restart-warning")).toContainText(
+    "score, fuel, and mission progress",
+  );
+  await expect(page.locator("#cancel-restart")).toBeFocused();
+  await page.clock.runFor(500);
+  expect((await snapshot()).ship).toEqual(before.ship);
+  expect((await snapshot()).fuel).toBe(before.fuel);
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#restart-confirmation")).toBeHidden();
+  expect((await snapshot()).terrainSeed).toBe(before.terrainSeed);
+  await page.clock.runFor(100);
+  expect((await snapshot()).ship.y).not.toBe(before.ship.y);
+  await page.keyboard.press("P");
+  await page.keyboard.press("R");
+  await page.keyboard.press("Escape");
+  expect((await snapshot()).paused).toBe(true);
+  expect((await snapshot()).fuel).toBe(before.fuel);
+  await expect(page.locator("#overlay-title")).toHaveText("FLIGHT PAUSED");
+  await page.getByRole("button", { name: "Preferences", exact: true }).click();
+  await page.keyboard.press("R");
+  await page.locator("#cancel-restart").click();
+  await expect(page.locator("#preferences")).toBeVisible();
+  expect((await snapshot()).terrainSeed).toBe(before.terrainSeed);
 });
 
 test("clean cockpit keeps Preferences and fullscreen, with graphics inside Preferences and no sound switch", async ({

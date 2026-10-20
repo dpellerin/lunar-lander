@@ -58,6 +58,7 @@ for (const vy of [5, 24]) {
     await page
       .getByRole("button", { name: "Restart game", exact: true })
       .click();
+    await page.locator("#confirm-restart").click();
     await page.clock.runFor(50);
     const reset = await page.evaluate(() => window.lunarDiagnostics());
     expect(reset.terrainSeed).not.toBe(settled.terrainSeed);
