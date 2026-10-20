@@ -140,3 +140,17 @@ test("splash sound unlock happens before controller launch without moving the ga
   await page.clock.runFor(150);
   await expect.poll(() => rms(page)).toBeGreaterThan(0.001);
 });
+
+test("keyboard activation of splash sound does not launch the mission", async ({
+  page,
+}) => {
+  await probeAudio(page, true);
+  await page.goto("/");
+  await page.locator("#audio-unlock").focus();
+  await page.keyboard.press("Enter");
+  await expect
+    .poll(() => page.evaluate(() => window.testAudio.state))
+    .toBe("running");
+  await expect(page.locator("#cockpit")).toHaveAttribute("data-phase", "ready");
+  await expect(page.locator("#audio-unlock")).toBeHidden();
+});

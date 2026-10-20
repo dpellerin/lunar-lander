@@ -273,6 +273,11 @@ const gameKeys = new Set([
   "ShiftRight",
 ]);
 window.addEventListener("keydown", (event) => {
+  if (
+    event.target?.id === "audio-unlock" &&
+    (event.code === "Enter" || event.code === "Space")
+  )
+    return;
   const tag = document.activeElement?.tagName;
   if (helpOpen) return;
   if (["INPUT", "SELECT", "TEXTAREA"].includes(tag)) return;
