@@ -1,4 +1,5 @@
 import { chromium, webkit } from "@playwright/test";
+import { probeAudio, rms } from "./fixtures/audio.js";
 for (const [name, engine] of [
   ["chromium", chromium],
   ["webkit", webkit],
@@ -7,6 +8,7 @@ for (const [name, engine] of [
   const page = await browser.newPage({
     viewport: { width: 1280, height: 800 },
   });
+  await probeAudio(page);
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto(process.env.LUNAR_URL || "http://127.0.0.1:4173");
@@ -16,6 +18,7 @@ for (const [name, engine] of [
     .click();
   await page.keyboard.down("Space");
   await page.waitForTimeout(400);
+  const audioRms = await rms(page);
   await page.keyboard.up("Space");
   const result = await page.evaluate(() => ({
     status: document.querySelector("#cockpit").dataset.phase,
@@ -23,13 +26,18 @@ for (const [name, engine] of [
     canvas: document.querySelector("canvas").width,
     devHook: typeof window.lunarDiagnostics,
     fonts: document.fonts.check('12px "IBM Plex Mono"'),
+    sound: window.testAudio?.state,
+    soundSwitch: Boolean(document.querySelector("#sound-toggle")),
   }));
-  console.log(name, JSON.stringify({ ...result, errors }));
+  console.log(name, JSON.stringify({ ...result, audioRms, errors }));
   if (
     result.status !== "flying" ||
     Number(result.fuel) >= 750 ||
     errors.length ||
     !result.fonts ||
+    result.sound !== "running" ||
+    result.soundSwitch ||
+    audioRms <= 0.001 ||
     result.devHook !== "undefined"
   )
     throw new Error("Production smoke test failed");

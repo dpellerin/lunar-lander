@@ -85,11 +85,11 @@ app.innerHTML = `
         <div id="gamepad-guide" class="key-guide" hidden><span><kbd class="wide-key">STICK</kbd><label>ROTATE</label></span><span><kbd>RT</kbd><label>THRUST</label></span><span><kbd>A</kbd><label>START/NEXT</label></span><span><kbd>B</kbd><label>ABORT</label></span><span><kbd>Y</kbd><label>PREFS</label></span><span><kbd>≡</kbd><label>PAUSE</label></span></div>
       </div>
     </div>
-    <div class="thrust-controls"><div class="panel-label"><span>03</span> <span id="thrust-heading">KEYBOARD THRUST</span><span class="thrust-value"><output id="throttle-label">65%</output><output id="controller-percent" hidden>0%</output></span></div><div class="throttle-row"><input id="throttle" aria-label="Thrust power" type="range" min="10" max="100" value="65" step="5"><div id="controller-thrust" hidden><meter id="controller-meter" aria-label="Right trigger thrust" min="0" max="1" value="0">0%</meter></div></div></div>
+    <div class="thrust-controls"><div class="panel-label"><span>03</span> <span id="thrust-heading">KEYBOARD THRUST</span><span class="thrust-value"><output id="throttle-label">65%</output><output id="controller-percent" hidden>0%</output></span></div><div class="throttle-row"><input id="throttle" aria-label="Thrust power" type="range" min="10" max="100" value="65" step="5"><div id="controller-thrust" hidden><meter id="controller-meter" aria-label="Right trigger thrust" min="0" max="1" value="0">0%</meter></div><button id="audio-unlock" hidden title="Your browser needs a click or key press before it can play sound.">CLICK FOR SOUND</button></div></div>
   </section>
   <div class="touch-controls" aria-label="Touch flight controls"><button data-touch="left" aria-label="Rotate left">↶</button><button data-touch="right" aria-label="Rotate right">↷</button><button data-touch="thrust" aria-label="Fire thruster">THRUST</button><button id="touch-abort">ABORT</button></div>
 
-  <dialog id="preferences" aria-labelledby="preferences-title"><div class="manual-heading"><h2 id="preferences-title">Preferences</h2><button id="close-preferences" class="utility" aria-label="Close preferences">×</button></div><div class="preference-settings"><label><input type="checkbox" id="sound-toggle" checked> SOUND</label><label><input type="checkbox" id="glow-toggle" checked> VECTOR GLOW</label><label class="graphics-label">GRAPHICS <select id="graphics-mode" aria-label="Graphics mode">${[...renderers].map(([id, R]) => `<option value="${id}">${R.label}</option>`).join("")}</select></label><button id="controller-enable" class="utility text-utility" hidden>ENABLE SOUND</button></div><details class="flight-manual">
+  <dialog id="preferences" aria-labelledby="preferences-title"><div class="manual-heading"><h2 id="preferences-title">Preferences</h2><button id="close-preferences" class="utility" aria-label="Close preferences">×</button></div><div class="preference-settings"><label><input type="checkbox" id="glow-toggle" checked> VECTOR GLOW</label><label class="graphics-label">GRAPHICS <select id="graphics-mode" aria-label="Graphics mode">${[...renderers].map(([id, R]) => `<option value="${id}">${R.label}</option>`).join("")}</select></label></div><details class="flight-manual">
       <summary>CONTROLS & SCORING</summary>
       <table class="reference-table controls-table" aria-label="Keyboard and controller controls">
         <colgroup><col style="width:34%"><col style="width:28%"><col style="width:38%"></colgroup>
@@ -104,7 +104,6 @@ app.innerHTML = `
           <tr><th scope="row">Pause / resume</th><td>P / Esc</td><td>Menu</td></tr>
           <tr><th scope="row">Preferences</th><td>?</td><td>Y</td></tr>
           <tr><th scope="row">Close preferences</th><td>Esc</td><td>B / Y</td></tr>
-          <tr><th scope="row">Mute</th><td>M</td><td>—</td></tr>
           <tr><th scope="row">Fullscreen</th><td>F</td><td>—</td></tr>
         </tbody>
       </table>
@@ -136,11 +135,28 @@ window.addEventListener("resize", resize);
 function announce(message) {
   $("#event-announcement").textContent = message;
 }
-function unlock() {
-  audio.unlock().catch(() => {
-    announce("Sound is unavailable. Flight controls remain active.");
-  });
+function updateAudioUI() {
+  const blocked = Boolean(audio.context && audio.context.state !== "running");
+  $("#audio-unlock").hidden = !blocked;
+  $(".throttle-row").classList.toggle("audio-blocked", blocked);
 }
+function unlock() {
+  audio
+    .unlock()
+    .then(updateAudioUI)
+    .catch(() => {
+      updateAudioUI();
+      announce("Sound could not start. Click the game to try again.");
+    });
+  updateAudioUI();
+}
+// Controller polling is not a trusted browser input gesture. Retry on page
+// interactions even if its first resume request is still waiting for permission.
+for (const type of ["pointerdown", "click", "keydown", "touchend"])
+  window.addEventListener(type, unlock, { capture: true, passive: true });
+window.addEventListener("focus", () => {
+  if (audio.context) unlock();
+});
 function suspendController() {
   controller.suspend();
   controllerState.ready = false;
@@ -172,6 +188,7 @@ function togglePause() {
   if (game.phase !== "flying") return;
   paused = !paused;
   if (paused) suspendController();
+  else unlock();
   clearInput();
   updateUI();
 }
@@ -196,10 +213,6 @@ function fullscreen() {
       .requestFullscreen?.()
       .catch(() => announce("Fullscreen is not available in this browser."));
 }
-function mute() {
-  audio.setMuted(!audio.muted);
-  $("#sound-toggle").checked = !audio.muted;
-}
 function setThrottle(value) {
   throttle = Math.max(0.1, Math.min(1, value));
   $("#throttle").value = String(Math.round(throttle * 100));
@@ -212,12 +225,8 @@ $("#preferences").addEventListener("cancel", (event) => {
   event.preventDefault();
   closePreferences();
 });
-$("#sound-toggle").addEventListener("change", (event) => {
-  unlock();
-  audio.setMuted(!event.target.checked);
-});
 $("#fullscreen-button").addEventListener("click", fullscreen);
-$("#controller-enable").addEventListener("click", unlock);
+$("#audio-unlock").addEventListener("click", unlock);
 canvas.addEventListener("pointerdown", unlock);
 $("#throttle").addEventListener("input", (event) =>
   setThrottle(Number(event.target.value) / 100),
@@ -253,7 +262,6 @@ const gameKeys = new Set([
   "Space",
   "KeyA",
   "KeyP",
-  "KeyM",
   "KeyF",
   "Enter",
   "Escape",
@@ -275,7 +283,6 @@ window.addEventListener("keydown", (event) => {
     unlock();
     abortGame(game);
   }
-  if (event.code === "KeyM") mute();
   if (event.code === "KeyF") fullscreen();
   if (event.code === "BracketLeft") setThrottle(throttle - 0.05);
   if (event.code === "BracketRight") setThrottle(throttle + 0.05);
@@ -298,7 +305,7 @@ document.addEventListener("visibilitychange", () => {
     clearInput();
     suspendController();
     if (game.phase === "flying") paused = true;
-  }
+  } else if (audio.context) unlock();
   lastTime = 0;
 });
 document.addEventListener("fullscreenchange", () => {
@@ -458,8 +465,7 @@ function updateControllerUI() {
   $("#controller-thrust").hidden = !state.supported;
   $("#controller-meter").value = state.thrust;
   $("#controller-percent").value = `${Math.round(state.thrust * 100)}%`;
-  $("#controller-enable").hidden =
-    !state.supported || audio.muted || audio.context?.state === "running";
+  updateAudioUI();
 }
 
 function pollController() {
@@ -490,8 +496,10 @@ function pollController() {
     announce("Controller disconnected. Flight paused.");
     updateUI();
   }
+  if (audio.context?.state === "running") controllerSoundAttempted = false;
   if (
     !controllerSoundAttempted &&
+    audio.context?.state !== "running" &&
     (controllerState.actions.length ||
       controllerState.thrust ||
       controllerState.rotate)

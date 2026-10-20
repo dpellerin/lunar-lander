@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("clean cockpit keeps Preferences and fullscreen, with sound and graphics inside Preferences", async ({
+test("clean cockpit keeps Preferences and fullscreen, with graphics inside Preferences and no sound switch", async ({
   page,
 }) => {
   await page.goto("/");
@@ -57,7 +57,7 @@ test("clean cockpit keeps Preferences and fullscreen, with sound and graphics in
   await page
     .getByRole("combobox", { name: "Graphics mode" })
     .selectOption("vector");
-  await page.getByLabel("SOUND", { exact: true }).uncheck();
+  await expect(page.locator("#sound-toggle")).toHaveCount(0);
   await page.getByLabel("VECTOR GLOW", { exact: true }).uncheck();
   await page.getByText("CONTROLS & SCORING", { exact: true }).click();
   for (const [width, height] of [
@@ -213,7 +213,7 @@ test("pause and preferences freeze simulation, removed fuel shortcut is inert, d
   ).toBe("command");
   await page.keyboard.press("KeyM");
   await page.getByRole("button", { name: "Preferences", exact: true }).click();
-  await expect(page.getByLabel("SOUND", { exact: true })).not.toBeChecked();
+  await expect(page.locator("#sound-toggle")).toHaveCount(0);
 });
 
 test("responsive canvas has no horizontal overflow and HUD columns never overlap", async ({

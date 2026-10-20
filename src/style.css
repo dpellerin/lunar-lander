@@ -1115,10 +1115,6 @@ input[type="checkbox"] {
   min-width: 4ch;
   text-align: right;
 }
-#controller-enable {
-  height: 30px;
-  font-size: 8px;
-}
 
 /* Compact flight controls with stable space for either input guide. */
 .screen-top {
@@ -1243,11 +1239,6 @@ input[type="checkbox"] {
     margin: 0;
   }
 }
-@media (max-width: 700px) {
-  #controller-enable {
-    min-height: 44px;
-  }
-}
 
 .input-guides {
   display: grid;
@@ -1341,4 +1332,17 @@ input[type="checkbox"] {
 }
 #controller-meter {
   width: 100%;
+}
+
+.throttle-row #audio-unlock {
+  width: 120px;
+  height: 24px;
+  padding: 0 4px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  background: var(--bg);
+  font-size: 9px;
+}
+.throttle-row.audio-blocked > :not(#audio-unlock) {
+  visibility: hidden;
 }

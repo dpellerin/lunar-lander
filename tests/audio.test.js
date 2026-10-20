@@ -27,3 +27,69 @@ test("arcade sound circuitry exposes discrete thrust levels and stable first-ord
     (filter.feedforward[0] + filter.feedforward[1]) / (1 + filter.feedback[1]);
   assert.ok(Math.abs(gain - 1) < 1e-9);
 });
+
+test("audio resumes Safari interruptions and recreates a closed context at full gain", async () => {
+  const previous = globalThis.AudioContext;
+  const contexts = [];
+  class AudioContextStub {
+    constructor() {
+      this.state = "suspended";
+      this.sampleRate = 48000;
+      this.currentTime = 0;
+      this.destination = {};
+      this.resumeCalls = 0;
+      contexts.push(this);
+    }
+    node() {
+      return {
+        connect: (node) => node,
+        start() {},
+        gain: { value: 0 },
+        frequency: { value: 0 },
+        Q: { value: 0 },
+      };
+    }
+    createGain() {
+      return this.node();
+    }
+    createBuffer() {
+      return { copyToChannel() {} };
+    }
+    createBufferSource() {
+      return this.node();
+    }
+    createIIRFilter() {
+      return this.node();
+    }
+    createBiquadFilter() {
+      return this.node();
+    }
+    async resume() {
+      this.resumeCalls++;
+      this.state = "running";
+    }
+  }
+  globalThis.AudioContext = AudioContextStub;
+  try {
+    const sound = new audio.ArcadeAudio();
+    await sound.unlock();
+    assert.equal(sound.master.gain.value, 0.55);
+    const original = sound.context;
+    original.state = "interrupted";
+    await sound.unlock();
+    assert.equal(sound.context, original);
+    assert.equal(original.resumeCalls, 2);
+    assert.equal(original.state, "running");
+    original.state = "closed";
+    sound.lastWarning = 200;
+    await sound.unlock();
+    assert.equal(contexts.length, 2);
+    assert.notEqual(sound.context, original);
+    assert.equal(sound.context.state, "running");
+    assert.equal(sound.master.gain.value, 0.55);
+    assert.equal(sound.lastWarning, -10);
+  } finally {
+    if (previous) globalThis.AudioContext = previous;
+    else delete globalThis.AudioContext;
+  }
+});

@@ -38,18 +38,18 @@ function lowpass(ctx, frequency) {
 
 export class ArcadeAudio {
   constructor() {
-    this.muted = false;
     this.context = null;
     this.lastWarning = -10;
   }
   async unlock() {
-    if (!this.context) {
+    if (!this.context || this.context.state === "closed") {
       const AudioContext =
         globalThis.AudioContext || globalThis.webkitAudioContext;
       if (!AudioContext) return;
       const ctx = (this.context = new AudioContext());
       this.master = ctx.createGain();
-      this.master.gain.value = this.muted ? 0 : 0.55;
+      this.master.gain.value = 0.55;
+      this.lastWarning = -10;
       this.master.connect(ctx.destination);
       // One complete maximal LFSR period: the loop doesn't introduce a noise seam.
       const length = Math.round((32767 / 12000) * ctx.sampleRate);
@@ -76,16 +76,9 @@ export class ArcadeAudio {
       mix.connect(final).connect(this.master);
       this.rumble.start();
     }
-    if (this.context.state === "suspended") await this.context.resume();
-  }
-  setMuted(muted) {
-    this.muted = muted;
-    if (this.master)
-      this.master.gain.setTargetAtTime(
-        muted ? 0 : 0.55,
-        this.context.currentTime,
-        0.015,
-      );
+    // Safari can interrupt a previously running context when a tab loses focus.
+    // Retry inside every real input gesture, even if an earlier resume is pending.
+    if (this.context.state !== "running") await this.context.resume();
   }
   update(thrust, lowFuel, active) {
     if (!this.context) return;
