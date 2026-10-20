@@ -1,0 +1,1344 @@
+@import "@fontsource/barlow-condensed/latin-500.css";
+@import "@fontsource/barlow-condensed/latin-600.css";
+@import "@fontsource/ibm-plex-mono/latin-400.css";
+@import "@fontsource/ibm-plex-mono/latin-500.css";
+@import "@fontsource/ibm-plex-mono/latin-600.css";
+:root {
+  color-scheme: dark;
+  --bg: #101310;
+  --panel: #171c18;
+  --ink: #e4e9df;
+  --muted: #8b9689;
+  --dim: #647260;
+  --rule: #303a2e;
+  --accent: #c4d491;
+  --screen: #030705;
+  --mono: "IBM Plex Mono", "Courier New", monospace;
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+  background: var(--bg);
+  font-synthesis: none;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+button,
+input,
+select {
+  font: inherit;
+}
+button,
+select {
+  color: inherit;
+}
+button {
+  cursor: pointer;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+button {
+  transition:
+    color 0.15s,
+    background 0.15s,
+    border-color 0.15s;
+}
+button:hover {
+  color: #fff;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+[hidden] {
+  display: none !important;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+#app {
+  width: min(1600px, 100%);
+  min-height: 100svh;
+  margin: auto;
+  padding: 0 36px 24px;
+  display: flex;
+  flex-direction: column;
+}
+.masthead {
+  min-height: 102px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.identity {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+}
+.insignia {
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--dim);
+  border-radius: 50%;
+  width: 43px;
+  height: 43px;
+  font-size: 34px;
+  color: var(--accent);
+  transform: rotate(-30deg);
+}
+h1 {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 28px;
+  letter-spacing: 3px;
+  margin: 0;
+  line-height: 1;
+}
+.identity p {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  margin: 9px 0 0;
+}
+.identity p span {
+  padding: 0 7px;
+  color: var(--dim);
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.utility {
+  background: transparent;
+  border: 1px solid var(--rule);
+  width: 30px;
+  height: 30px;
+  color: var(--muted);
+  font-size: 15px;
+}
+.utility:hover {
+  background: var(--panel);
+  border-color: var(--muted);
+}
+.text-utility {
+  width: auto;
+  font-size: 9px;
+  letter-spacing: 0.7px;
+  padding: 0 12px;
+}
+.text-utility span {
+  font-size: 15px;
+  margin-left: 8px;
+}
+#cockpit {
+  border: 1px solid #3b4635;
+  background: var(--screen);
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+  flex: 1;
+}
+.screen-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  padding: 14px 20px;
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  color: #a6b09b;
+}
+.screen-top {
+  position: relative;
+  border-bottom: 1px solid #1d281e;
+}
+#mission-label {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.muted {
+  color: var(--dim);
+}
+#flight-screen {
+  position: relative;
+  flex: 1;
+  min-height: 260px;
+  height: clamp(330px, calc(100svh - 350px), 720px);
+  overflow: hidden;
+}
+canvas {
+  position: absolute;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.telemetry {
+  position: absolute;
+  top: 26px;
+  z-index: 1;
+  display: grid;
+  gap: 7px;
+  pointer-events: none;
+  text-shadow: 0 0 6px #b9e5ce66;
+  font-size: clamp(9px, 1.05vw, 13px);
+  letter-spacing: 1px;
+  color: #d4e0d6;
+}
+.telemetry-left {
+  left: 30px;
+  width: 170px;
+}
+.telemetry-right {
+  right: 30px;
+  width: 250px;
+}
+.telemetry > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 22px;
+}
+.telemetry strong {
+  font-weight: 400;
+  white-space: nowrap;
+}
+.telemetry-right > div {
+  gap: 15px;
+}
+.screen-corner {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-color: #6f7a60;
+  pointer-events: none;
+}
+.top-left {
+  top: 9px;
+  left: 9px;
+  border-top: 1px solid;
+  border-left: 1px solid;
+}
+.top-right {
+  top: 9px;
+  right: 9px;
+  border-top: 1px solid;
+  border-right: 1px solid;
+}
+.bottom-left {
+  bottom: 9px;
+  left: 9px;
+  border-bottom: 1px solid;
+  border-left: 1px solid;
+}
+.bottom-right {
+  bottom: 9px;
+  right: 9px;
+  border-bottom: 1px solid;
+  border-right: 1px solid;
+}
+.flight-overlay {
+  position: absolute;
+  top: 28%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 30px);
+  text-align: center;
+  z-index: 2;
+  padding: 20px 25px 16px;
+  background: #030705e6;
+}
+.overlay-eyebrow {
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: var(--dim);
+  margin-bottom: 15px;
+}
+.flight-overlay h2 {
+  font-family: var(--display);
+  font-size: clamp(30px, 4.7vw, 66px);
+  font-weight: 500;
+  letter-spacing: 5px;
+  line-height: 1;
+  margin: 0;
+  color: #e4ebdf;
+  text-shadow: 0 0 14px #d6f3cc22;
+}
+.flight-overlay p {
+  font-size: 11px;
+  color: #9ba894;
+  margin: 15px 0 25px;
+}
+.launch-button {
+  background: transparent;
+  border: 1px solid #788762;
+  padding: 13px 22px;
+  color: var(--accent);
+  letter-spacing: 1.5px;
+  font-size: 10px;
+}
+.launch-button:hover {
+  background: #c4d49113;
+  border-color: var(--accent);
+}
+.launch-button > span {
+  margin-left: 22px;
+  color: #8fa475;
+  font-size: 14px;
+}
+.flight-overlay .overlay-hint {
+  color: #67765d;
+  letter-spacing: 1.5px;
+  font-size: 8px;
+  margin: 13px 0 0;
+}
+.fuel-alert {
+  position: absolute;
+  top: 112px;
+  right: 30px;
+  color: #dfca86;
+  font-size: 11px;
+  letter-spacing: 2px;
+}
+.warning {
+  color: #dfca86;
+}
+.control-deck {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr 0.9fr;
+  gap: 25px;
+  padding: 26px 0 23px;
+  border-bottom: 1px solid var(--rule);
+}
+.control-deck > div + div {
+  border-left: 1px solid var(--rule);
+  padding-left: 25px;
+}
+.panel-label {
+  font-size: 9px;
+  letter-spacing: 1.4px;
+  color: #b0bca8;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.panel-label > span {
+  font-size: 8px;
+  color: var(--dim);
+}
+.difficulty-options {
+  display: flex;
+  margin-top: 17px;
+  gap: 0;
+}
+.difficulty-options button {
+  background: transparent;
+  border: 1px solid var(--rule);
+  color: #87937d;
+  font-size: 10px;
+  padding: 8px 10px;
+  margin-right: -1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.difficulty-options button[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+  z-index: 1;
+  background: #c4d4910c;
+}
+.level-number {
+  display: none;
+}
+.control-deck p {
+  color: var(--dim);
+  font-size: 8px;
+  margin: 12px 0 0;
+  line-height: 1.6;
+}
+.control-deck p > span {
+  padding: 0 5px;
+}
+.key-guide {
+  display: flex;
+  gap: 22px;
+  margin-top: 16px;
+}
+.key-guide > span {
+  display: flex;
+  gap: 4px;
+  position: relative;
+  padding-bottom: 19px;
+}
+.key-guide label {
+  position: absolute;
+  bottom: 0;
+  font-size: 7px;
+  letter-spacing: 1.2px;
+  white-space: nowrap;
+  color: var(--muted);
+}
+kbd {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 24px;
+  height: 26px;
+  border: 1px solid #46503e;
+  border-bottom: 2px solid #46503e;
+  color: #c7d1bf;
+  font: 11px var(--mono);
+  border-radius: 3px;
+}
+.wide-key {
+  padding: 0 11px;
+  font-size: 9px;
+}
+.pilot-controls p {
+  margin-top: 9px;
+}
+.thrust-controls output {
+  color: var(--accent);
+  margin-left: auto;
+  font-size: 10px;
+  letter-spacing: 0;
+}
+.throttle-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 22px;
+  color: var(--dim);
+  font-size: 7px;
+  letter-spacing: 1px;
+}
+input[type="range"] {
+  appearance: none;
+  width: 100%;
+  min-width: 50px;
+  height: 3px;
+  background: #3d4933;
+  cursor: pointer;
+  margin: 8px 0;
+}
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 8px;
+  height: 18px;
+  border-radius: 1px;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--bg);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 8px;
+  height: 18px;
+  border-radius: 1px;
+  background: var(--accent);
+  border: 0;
+}
+.thrust-controls p {
+  margin-top: 17px;
+  white-space: nowrap;
+}
+.thrust-controls kbd {
+  height: 16px;
+  min-width: 15px;
+  font-size: 9px;
+  border-color: var(--rule);
+  border-bottom-width: 1px;
+}
+.touch-controls {
+  display: none;
+}
+select {
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  background: var(--bg);
+  font-size: 8px;
+  padding: 5px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.graphics-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 7px;
+}
+dialog {
+  background: #151b15;
+  color: var(--ink);
+  border: 1px solid #58634a;
+  max-width: 760px;
+  width: calc(100% - 32px);
+  max-height: calc(100svh - 40px);
+  padding: 26px 32px;
+  box-shadow: 0 20px 100px #000a;
+}
+dialog::backdrop {
+  background: #000b;
+  backdrop-filter: blur(3px);
+}
+.header-actions #preferences-button {
+  width: 44px;
+  height: 44px;
+  font-size: 20px;
+}
+.manual-heading #preferences-title {
+  margin: 0;
+  font-size: 30px;
+  color: var(--ink);
+  letter-spacing: 1px;
+}
+.preference-settings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 20px;
+  margin-top: 24px;
+  font-size: 10px;
+}
+.preference-settings > label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+.preference-settings .graphics-label {
+  grid-column: 1 / -1;
+  justify-content: space-between;
+  font-size: 10px;
+}
+.preference-settings select {
+  min-height: 44px;
+  font-size: 12px;
+  padding: 10px;
+  border: 1px solid var(--rule);
+}
+.flight-manual {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--rule);
+}
+.flight-manual summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-size: 10px;
+  padding: 8px 0;
+}
+.flight-manual > h3 {
+  color: var(--accent);
+  font: 500 10px var(--mono);
+  letter-spacing: 1px;
+  margin: 26px 0 4px;
+}
+.manual-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--dim);
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+dialog h2 {
+  font-family: var(--display);
+  font-size: 42px;
+  font-weight: 500;
+  margin: 20px 0 10px;
+}
+dialog p {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #a1af97;
+}
+.reference-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 11px;
+  line-height: 1.6;
+  text-align: left;
+}
+.reference-table th,
+.reference-table td {
+  border-bottom: 1px solid var(--rule);
+  padding: 9px 10px 9px 0;
+  vertical-align: top;
+  font-weight: 400;
+  overflow-wrap: break-word;
+}
+.reference-table th:last-child,
+.reference-table td:last-child {
+  padding-right: 0;
+}
+.reference-table thead th {
+  color: var(--accent);
+  font-size: 10px;
+  letter-spacing: 0.5px;
+}
+.reference-table tbody td {
+  color: #a1af97;
+}
+.scoring-table {
+  margin-top: 0;
+}
+@media (max-width: 420px) {
+  .reference-table th,
+  .reference-table td {
+    padding: 9px 6px 9px 0;
+  }
+  .reference-table thead th {
+    font-size: 9px;
+    letter-spacing: 0;
+  }
+}
+input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+@media (min-width: 1500px) {
+  #app {
+    padding: 0 55px;
+  }
+  .masthead {
+    min-height: 115px;
+  }
+  .control-deck {
+    padding: 30px 0;
+  }
+  .difficulty-options button {
+    padding: 9px 16px;
+  }
+  .key-guide {
+    gap: 30px;
+  }
+}
+@media (max-width: 1100px) {
+  #app {
+    padding: 0 22px;
+  }
+  .control-deck {
+    gap: 18px;
+    grid-template-columns: 1.2fr 1fr;
+  }
+  .control-deck > div + div {
+    padding-left: 18px;
+  }
+  .thrust-controls {
+    grid-column: 1/-1;
+    border-left: 0 !important;
+    border-top: 1px solid var(--rule);
+    padding: 15px 0 0 !important;
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    column-gap: 20px;
+    align-items: center;
+  }
+  .throttle-row {
+    margin: 0;
+  }
+  .thrust-controls p {
+    margin: 7px 0 0;
+    grid-column: 2;
+  }
+  .control-deck {
+    padding: 22px 0 18px;
+  }
+  #flight-screen {
+    height: clamp(340px, calc(100svh - 407px), 720px);
+  }
+  .difficulty-options button {
+    padding: 8px 13px;
+  }
+  .key-guide {
+    gap: 25px;
+  }
+}
+@media (max-width: 700px) {
+  #app {
+    padding: 0 14px;
+  }
+  .masthead {
+    min-height: 80px;
+  }
+  .identity {
+    gap: 10px;
+  }
+  .insignia {
+    width: 30px;
+    height: 30px;
+    font-size: 25px;
+  }
+  h1 {
+    font-size: 23px;
+    letter-spacing: 2px;
+  }
+  .identity p {
+    font-size: 7px;
+    letter-spacing: 1px;
+    margin-top: 6px;
+  }
+  .header-actions {
+    gap: 7px;
+  }
+  .header-actions .text-utility {
+    font-size: 0;
+    padding: 0;
+    width: 28px;
+  }
+  .header-actions .text-utility span {
+    font-size: 14px;
+    margin: 0;
+  }
+  .utility {
+    width: 27px;
+    height: 27px;
+  }
+  .screen-top {
+    padding: 12px;
+    font-size: 8px;
+    letter-spacing: 0.7px;
+  }
+  .telemetry {
+    font-size: 9px;
+    letter-spacing: 0.4px;
+    gap: 7px;
+    top: 20px;
+  }
+  .telemetry-left {
+    left: 18px;
+    width: 110px;
+  }
+  .telemetry-right {
+    right: 18px;
+    width: 183px;
+  }
+  .telemetry > div {
+    gap: 8px;
+  }
+  .telemetry-right > div {
+    gap: 7px;
+  }
+  #flight-screen {
+    height: clamp(350px, calc(100svh - 300px), 610px);
+    min-height: 310px;
+  }
+  .flight-overlay {
+    top: 26%;
+    padding: 20px 12px;
+  }
+  .flight-overlay h2 {
+    font-size: 40px;
+    letter-spacing: 3px;
+  }
+  .overlay-eyebrow {
+    font-size: 7px;
+    letter-spacing: 1px;
+  }
+  .flight-overlay p {
+    font-size: 10px;
+    max-width: 260px;
+    margin: 15px auto 23px;
+  }
+  .flight-overlay .overlay-hint {
+    font-size: 7px;
+    margin-top: 13px;
+  }
+  .launch-button {
+    font-size: 9px;
+    padding: 13px 15px;
+  }
+  .control-deck {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding-top: 20px;
+  }
+  .control-deck > div + div {
+    border-left: 0;
+    padding: 0;
+  }
+  .difficulty-options {
+    margin-top: 13px;
+  }
+  .difficulty-options button {
+    flex: 1;
+    padding: 10px 5px;
+    font-size: 10px;
+  }
+  .level-number {
+    display: inline;
+    font-size: 8px;
+    color: var(--dim);
+    margin-right: 6px;
+  }
+  .panel-label {
+    font-size: 8px;
+  }
+  .pilot-controls {
+    display: none;
+  }
+  .thrust-controls {
+    grid-column: auto;
+    grid-template-columns: 140px 1fr;
+    padding-top: 17px !important;
+    gap: 12px;
+  }
+  .thrust-controls .panel-label {
+    gap: 7px;
+  }
+  .thrust-controls .panel-label > span {
+    display: none;
+  }
+  .thrust-controls p {
+    grid-column: 1/-1;
+    text-align: right;
+    margin: 0;
+    font-size: 8px;
+  }
+  .thrust-controls output {
+    font-size: 9px;
+  }
+  .control-deck p {
+    font-size: 8px;
+  }
+  .touch-controls {
+    display: flex;
+    gap: 8px;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .touch-controls button {
+    touch-action: none;
+    user-select: none;
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    height: 46px;
+    min-width: 48px;
+    color: var(--accent);
+    font-size: 22px;
+  }
+  .touch-controls [data-touch="thrust"] {
+    flex: 1;
+    font-size: 11px;
+    letter-spacing: 2px;
+  }
+  .touch-controls #touch-abort {
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 0 14px;
+    color: #c7b391;
+  }
+  .touch-controls button:active {
+    background: #c4d49122;
+  }
+  .graphics-label {
+    font-size: 0;
+    gap: 0;
+  }
+  .graphics-label select {
+    font-size: 8px;
+  }
+  .fuel-alert {
+    font-size: 9px;
+    right: 18px;
+    top: 98px;
+  }
+  dialog {
+    padding: 20px;
+  }
+  .manual-heading {
+    font-size: 7px;
+  }
+  dialog h2 {
+    font-size: 35px;
+  }
+}
+@media (max-height: 600px) and (min-width: 701px) {
+  .masthead {
+    min-height: 65px;
+  }
+  .identity h1 {
+    font-size: 23px;
+  }
+  .identity p {
+    font-size: 7px;
+  }
+  .control-deck {
+    padding: 14px 0;
+  }
+  .panel-label {
+    font-size: 8px;
+  }
+  .difficulty-options {
+    margin-top: 10px;
+  }
+  .control-deck p {
+    margin-top: 7px;
+  }
+  .key-guide {
+    margin-top: 9px;
+  }
+  .thrust-controls {
+    display: none;
+  }
+  .control-deck {
+    grid-template-columns: 1fr 1fr;
+  }
+  #flight-screen {
+    height: calc(100svh - 250px);
+    min-height: 220px;
+  }
+  .telemetry {
+    font-size: 9px;
+    top: 15px;
+  }
+  .flight-overlay {
+    top: 24%;
+    padding: 10px 20px;
+  }
+  .flight-overlay h2 {
+    font-size: 34px;
+  }
+  .flight-overlay p {
+    margin: 10px 0 15px;
+  }
+  .overlay-eyebrow {
+    margin-bottom: 8px;
+  }
+  .flight-overlay .overlay-hint {
+    display: none;
+  }
+  .launch-button {
+    padding: 9px 15px;
+  }
+  .screen-top {
+    padding: 10px 15px;
+  }
+}
+@media (max-width: 700px) {
+  .telemetry-left {
+    width: 94px;
+    left: 14px;
+  }
+  .telemetry-right {
+    width: 155px;
+    right: 14px;
+  }
+  .telemetry {
+    font-size: 9px;
+    letter-spacing: 0;
+  }
+  .header-actions {
+    gap: 3px;
+  }
+  .masthead {
+    min-height: 90px;
+  }
+  .header-actions .utility {
+    height: 44px;
+    min-width: 36px;
+  }
+  .header-actions .text-utility {
+    width: 36px;
+  }
+  .identity {
+    gap: 7px;
+  }
+  .insignia {
+    display: none;
+  }
+  h1 {
+    font-size: 22px;
+  }
+  .difficulty-options button {
+    min-height: 44px;
+  }
+  .panel-label {
+    font-size: 9px;
+  }
+  .control-deck p {
+    color: #909c84;
+    font-size: 9px;
+  }
+  .thrust-controls p {
+    font-size: 8px;
+  }
+  .launch-button {
+    min-height: 44px;
+  }
+  .flight-overlay {
+    background: #030705fa;
+  }
+  .overlay-eyebrow {
+    color: #94a186;
+  }
+  .throttle-row input {
+    height: 24px;
+    background: linear-gradient(#3d4933, #3d4933) center/100% 3px no-repeat;
+  }
+  .throttle-row input::-webkit-slider-thumb {
+    box-shadow: none;
+  }
+  #flight-screen {
+    min-height: 340px;
+  }
+  .fuel-alert {
+    font-size: 10px;
+  }
+  .header-actions {
+    margin-left: auto;
+  }
+  .header-actions .utility:first-child {
+    min-width: 30px;
+  }
+  .masthead {
+    gap: 8px;
+  }
+  .touch-controls {
+    padding-bottom: calc(15px + env(safe-area-inset-bottom));
+  }
+}
+@media (max-width: 360px) {
+  .identity p {
+    font-size: 6px;
+  }
+  .header-actions {
+    gap: 1px;
+  }
+  h1 {
+    font-size: 21px;
+    letter-spacing: 1px;
+  }
+  .header-actions .text-utility {
+    width: 31px;
+    min-width: 31px;
+  }
+  .header-actions .utility:first-child {
+    width: 27px;
+    min-width: 27px;
+  }
+  .telemetry-right {
+    width: 147px;
+  }
+  .telemetry {
+    font-size: 8px;
+  }
+  .telemetry-left {
+    width: 88px;
+  }
+  .flight-overlay h2 {
+    font-size: 34px;
+  }
+  .difficulty-options button {
+    font-size: 9px;
+  }
+  .level-number {
+    display: none;
+  }
+}
+
+.flight-overlay.round-result {
+  top: clamp(82px, 15%, 108px);
+  width: min(420px, calc(100% - 24px));
+  padding: 0;
+  background: transparent;
+}
+.round-result .overlay-eyebrow {
+  margin: 0 0 6px;
+  font-size: 7px;
+  letter-spacing: 1px;
+}
+.flight-overlay.round-result h2 {
+  font-size: 28px;
+  letter-spacing: 2px;
+}
+.flight-overlay.round-result p {
+  max-width: none;
+  margin: 6px 0 10px;
+  font-size: 10px;
+}
+.round-result .launch-button {
+  min-height: 44px;
+  padding: 8px 16px;
+}
+.flight-overlay.round-result .overlay-hint {
+  display: block;
+  margin: 7px 0 0;
+  font-size: 7px;
+}
+@media (max-width: 520px) {
+  .flight-overlay.round-result h2 {
+    font-size: 26px;
+  }
+}
+
+#controller-thrust {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--accent);
+}
+#controller-thrust label {
+  font-size: 8px;
+  letter-spacing: 1px;
+}
+#controller-meter {
+  width: 100px;
+  height: 9px;
+  accent-color: var(--accent);
+}
+#controller-meter::-webkit-meter-bar {
+  background: var(--rule);
+  border: 0;
+}
+#controller-meter::-webkit-meter-optimum-value {
+  background: var(--accent);
+}
+#controller-meter::-moz-meter-bar {
+  background: var(--accent);
+}
+#controller-percent {
+  min-width: 4ch;
+  text-align: right;
+}
+#controller-enable {
+  height: 30px;
+  font-size: 8px;
+}
+
+/* Compact flight controls with stable space for either input guide. */
+.screen-top {
+  justify-content: center;
+  min-height: 34px;
+  padding: 10px 16px;
+}
+#mission-label {
+  position: static;
+  transform: none;
+}
+.header-actions #preferences-button,
+.header-actions #fullscreen-button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+  flex: 0 0 44px;
+}
+.control-deck {
+  grid-template-columns: minmax(0, 1fr) 420px 190px;
+  padding: 16px 0;
+  gap: 20px;
+}
+.control-deck > div + div {
+  padding-left: 20px;
+}
+.difficulty-options,
+.key-guide {
+  margin-top: 10px;
+}
+.key-guide {
+  gap: 14px;
+}
+.control-deck p {
+  margin-top: 7px;
+}
+.thrust-controls {
+  display: block;
+  grid-column: auto;
+  border-top: 0;
+}
+.thrust-controls .panel-label {
+  gap: 7px;
+  font-size: 8px;
+  letter-spacing: 0.8px;
+}
+.throttle-row {
+  width: 120px;
+  max-width: 100%;
+  margin-top: 10px;
+}
+.throttle-row input {
+  height: 24px;
+  margin: 0;
+  background: linear-gradient(#3d4933, #3d4933) center/100% 3px no-repeat;
+}
+#controller-status {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font: 9px/1.6 var(--mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#controller-thrust {
+  grid-column: 3;
+  grid-row: 1;
+  gap: 6px;
+}
+#controller-meter {
+  width: 70px;
+}
+#controller-thrust[hidden] {
+  display: flex !important;
+  visibility: hidden;
+}
+@media (min-width: 701px) and (max-width: 1100px) {
+  .control-deck {
+    grid-template-columns: minmax(0, 1fr) 175px;
+    gap: 16px;
+  }
+  .mission-controls {
+    grid-column: 1 / -1;
+  }
+  .control-deck > .pilot-controls {
+    border-left: 0;
+    padding-left: 0;
+  }
+  .control-deck > .thrust-controls {
+    padding-left: 16px;
+    border-left: 1px solid var(--rule) !important;
+  }
+  .thrust-controls {
+    padding-top: 0 !important;
+  }
+}
+@media (max-width: 900px) {
+  #controller-thrust {
+    grid-column: 2;
+  }
+}
+@media (max-width: 700px) {
+  .control-deck {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .control-deck > div + div {
+    padding: 0 !important;
+  }
+  .thrust-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .throttle-row {
+    flex: 0 0 120px;
+    margin: 0;
+  }
+}
+@media (max-width: 700px) {
+  #controller-enable {
+    min-height: 44px;
+  }
+}
+
+.input-guides {
+  display: grid;
+}
+#cockpit[data-phase="ready"] .launch-button {
+  margin-top: 24px;
+}
+#keyboard-controls,
+#gamepad-guide {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+#keyboard-controls[hidden] {
+  display: block !important;
+  visibility: hidden;
+}
+#keyboard-guide[hidden] {
+  display: flex !important;
+}
+#keyboard-guide > span {
+  padding-bottom: 16px;
+}
+#gamepad-guide,
+#gamepad-guide[hidden] {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 14px;
+}
+#gamepad-guide[hidden] {
+  visibility: hidden;
+}
+#gamepad-guide > span {
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+}
+#gamepad-guide label {
+  position: static;
+  font-size: 11px;
+  letter-spacing: 0;
+}
+#gamepad-guide kbd {
+  height: 28px;
+  flex-shrink: 0;
+}
+#gamepad-guide .wide-key {
+  min-width: 44px;
+  padding: 0;
+  font-size: 10px;
+}
+@media (max-width: 420px) {
+  #gamepad-guide,
+  #gamepad-guide[hidden] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  .pilot-controls {
+    display: block;
+  }
+}
+.thrust-controls .panel-label > #thrust-heading {
+  display: inline;
+  font-size: inherit;
+  color: inherit;
+}
+.thrust-controls .panel-label > .thrust-value {
+  display: inline-grid;
+  margin-left: auto;
+  width: 4ch;
+  color: var(--accent);
+}
+.thrust-value output {
+  grid-area: 1 / 1;
+  margin: 0;
+  text-align: right;
+}
+.throttle-row {
+  display: grid;
+  height: 24px;
+}
+.throttle-row > * {
+  grid-area: 1 / 1;
+}
+.throttle-row #controller-thrust {
+  grid-area: 1 / 1;
+  width: 120px;
+  max-width: 100%;
+  height: 24px;
+  align-items: center;
+}
+#controller-meter {
+  width: 100%;
+}

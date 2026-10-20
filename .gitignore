@@ -1,0 +1,15 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+.DS_Store
+
+# Local captures and recordings
+qa/
+output/
+
+# Local settings and credentials
+.env
+.env.*
+!.env.example
+*.local
