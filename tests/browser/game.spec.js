@@ -106,6 +106,7 @@ async function resultLayout(page) {
 test("game over starts a fresh game without an add-fuel feature", async ({
   page,
 }) => {
+  await page.clock.install();
   await page.route(/\/src\/main\.js(?:\?.*)?$/, async (route) => {
     const response = await route.fetch();
     const source = (await response.text()).replace(
@@ -115,6 +116,8 @@ test("game over starts a fresh game without an add-fuel feature", async ({
     await route.fulfill({ response, body: source });
   });
   await page.goto("/");
+  await page.evaluate(() => document.fonts.ready);
+  await page.clock.pauseAt(new Date(Date.now() + 1000));
   expect((await resultLayout(page)).transparent).toBe(true);
   await expect(
     page.getByRole("button", { name: "New game", exact: true }),

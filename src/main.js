@@ -152,7 +152,7 @@ function unlock() {
 }
 // Controller polling is not a trusted browser input gesture. Retry on page
 // interactions even if its first resume request is still waiting for permission.
-for (const type of ["pointerdown", "click", "keydown", "touchend"])
+for (const type of ["click", "keydown", "touchend"])
   window.addEventListener(type, unlock, { capture: true, passive: true });
 window.addEventListener("focus", () => {
   if (audio.context) unlock();
