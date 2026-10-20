@@ -66,6 +66,7 @@ app.innerHTML = `
         <p id="overlay-message" hidden></p>
         <button id="launch-button" class="launch-button" aria-label="Launch mission">LAUNCH MISSION <span>↵</span></button>
         <p id="overlay-hint" class="overlay-hint">PRESS ENTER TO BEGIN</p>
+        <div id="overlay-audio" class="overlay-audio"><button id="audio-unlock" hidden title="Your browser needs a click or key press before it can play sound.">CLICK FOR SOUND</button></div>
       </div>
       <div id="fuel-alert" class="fuel-alert" hidden>LOW FUEL</div>
       <div id="event-announcement" class="sr-only" role="status" aria-live="polite"></div>
@@ -85,7 +86,7 @@ app.innerHTML = `
         <div id="gamepad-guide" class="key-guide" hidden><span><kbd class="wide-key">STICK</kbd><label>ROTATE</label></span><span><kbd>RT</kbd><label>THRUST</label></span><span><kbd>A</kbd><label>START/NEXT</label></span><span><kbd>B</kbd><label>ABORT</label></span><span><kbd>Y</kbd><label>PREFS</label></span><span><kbd>≡</kbd><label>PAUSE</label></span></div>
       </div>
     </div>
-    <div class="thrust-controls"><div class="panel-label"><span>03</span> <span id="thrust-heading">KEYBOARD THRUST</span><span class="thrust-value"><output id="throttle-label">65%</output><output id="controller-percent" hidden>0%</output></span></div><div class="throttle-row"><input id="throttle" aria-label="Thrust power" type="range" min="10" max="100" value="65" step="5"><div id="controller-thrust" hidden><meter id="controller-meter" aria-label="Right trigger thrust" min="0" max="1" value="0">0%</meter></div><button id="audio-unlock" hidden title="Your browser needs a click or key press before it can play sound.">CLICK FOR SOUND</button></div></div>
+    <div class="thrust-controls"><div class="panel-label"><span>03</span> <span id="thrust-heading">KEYBOARD THRUST</span><span class="thrust-value"><output id="throttle-label">65%</output><output id="controller-percent" hidden>0%</output></span></div><div class="throttle-row"><input id="throttle" aria-label="Thrust power" type="range" min="10" max="100" value="65" step="5"><div id="controller-thrust" hidden><meter id="controller-meter" aria-label="Right trigger thrust" min="0" max="1" value="0">0%</meter></div></div></div>
   </section>
   <div class="touch-controls" aria-label="Touch flight controls"><button data-touch="left" aria-label="Rotate left">↶</button><button data-touch="right" aria-label="Rotate right">↷</button><button data-touch="thrust" aria-label="Fire thruster">THRUST</button><button id="touch-abort">ABORT</button></div>
 
@@ -136,9 +137,10 @@ function announce(message) {
   $("#event-announcement").textContent = message;
 }
 function updateAudioUI() {
-  const blocked = Boolean(audio.context && audio.context.state !== "running");
-  $("#audio-unlock").hidden = !blocked;
-  $(".throttle-row").classList.toggle("audio-blocked", blocked);
+  const ready = audio.context?.state === "running";
+  $("#audio-unlock").hidden = ready;
+  // Keep the splash actions steady when the sound button disappears.
+  $("#overlay-audio").hidden = game.phase !== "ready" && ready;
 }
 function unlock() {
   audio

@@ -59,12 +59,10 @@ for (const gesture of ["click", "key"]) {
       "data-phase",
       "flying",
     );
-    await expect(
-      page.getByRole("button", { name: "CLICK FOR SOUND" }),
-    ).toBeVisible();
+    await expect(page.locator("#audio-unlock")).toBeHidden();
     expect(await page.locator(".throttle-row").boundingBox()).toEqual(before);
     if (gesture === "click")
-      await page.getByRole("button", { name: "CLICK FOR SOUND" }).click();
+      await page.locator("canvas").click({ position: { x: 20, y: 150 } });
     else await page.keyboard.press("Space");
     await expect
       .poll(() => page.evaluate(() => window.testAudio.state))
@@ -89,3 +87,56 @@ for (const gesture of ["click", "key"]) {
     expect(await page.locator(".throttle-row").boundingBox()).toEqual(before);
   });
 }
+
+test("splash sound unlock happens before controller launch without moving the game", async ({
+  page,
+}) => {
+  await probeAudio(page, true);
+  await page.addInitScript(() => {
+    window.audioPad = {
+      id: "Xbox Wireless Controller (simulated)",
+      connected: true,
+      index: 0,
+      mapping: "standard",
+      axes: [0, 0, 0, 0],
+      buttons: Array.from({ length: 17 }, () => ({ value: 0, pressed: false })),
+    };
+    Object.defineProperty(navigator, "getGamepads", {
+      value: () => [window.audioPad],
+    });
+  });
+  await page.clock.install();
+  await page.goto("/");
+  await page.evaluate(() => document.fonts.ready);
+  await page.clock.runFor(150);
+  const sound = page.locator("#flight-overlay #audio-unlock");
+  await expect(sound).toBeVisible();
+  await expect(page.locator(".control-deck #audio-unlock")).toHaveCount(0);
+  const launchBefore = await page.locator("#launch-button").boundingBox();
+  const canvasBefore = await page.locator("canvas").boundingBox();
+  const deckBefore = await page.locator(".control-deck").boundingBox();
+  await sound.click();
+  await expect
+    .poll(() => page.evaluate(() => window.testAudio.state))
+    .toBe("running");
+  await expect(sound).toBeHidden();
+  await expect(page.locator("#cockpit")).toHaveAttribute("data-phase", "ready");
+  expect(await page.locator("#launch-button").boundingBox()).toEqual(
+    launchBefore,
+  );
+  expect(await page.locator("canvas").boundingBox()).toEqual(canvasBefore);
+  expect(await page.locator(".control-deck").boundingBox()).toEqual(deckBefore);
+  await page.evaluate(() => {
+    window.audioPad.buttons[0] = { value: 1, pressed: true };
+  });
+  await page.clock.runFor(150);
+  await expect(page.locator("#cockpit")).toHaveAttribute(
+    "data-phase",
+    "flying",
+  );
+  await page.evaluate(() => {
+    window.audioPad.buttons[7] = { value: 1, pressed: true };
+  });
+  await page.clock.runFor(150);
+  await expect.poll(() => rms(page)).toBeGreaterThan(0.001);
+});

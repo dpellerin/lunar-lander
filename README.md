@@ -21,7 +21,7 @@ Every round brings a new rocky landscape. Choose from four difficulty levels, ai
 
 For an Xbox controller, pair it with your device, then press any button to connect. Release it and press **A** to launch. Squeeze the right trigger to control your thrust.
 
-Touch controls are available on smaller screens. Open **Preferences** for vector glow, the full controls table and scoring. Sound is always enabled; if your browser blocks it during controller play, click the game once.
+Touch controls are available on smaller screens. Open **Preferences** for vector glow, the full controls table and scoring. Sound is always enabled. **Click for Sound** on the splash screen unlocks audio before you launch with a controller.
 
 ## Scoring
 

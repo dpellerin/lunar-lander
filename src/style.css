@@ -1334,15 +1334,20 @@ input[type="checkbox"] {
   width: 100%;
 }
 
-.throttle-row #audio-unlock {
-  width: 120px;
-  height: 24px;
-  padding: 0 4px;
-  border: 1px solid var(--accent);
-  color: var(--accent);
-  background: var(--bg);
-  font-size: 9px;
+.overlay-audio {
+  min-height: 36px;
+  margin-top: 12px;
 }
-.throttle-row.audio-blocked > :not(#audio-unlock) {
-  visibility: hidden;
+#overlay-audio #audio-unlock {
+  min-height: 36px;
+  padding: 8px 16px;
+  border: 1px solid #788762;
+  color: var(--accent);
+  background: transparent;
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+#overlay-audio #audio-unlock:hover {
+  background: #c4d49113;
+  border-color: var(--accent);
 }
