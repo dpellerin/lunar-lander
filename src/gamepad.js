@@ -1,5 +1,5 @@
 // W3C standard layout: Xbox A/B/X/Y, Menu, left stick, D-pad and right trigger.
-const ACTIONS = { launch: 0, abort: 1, manual: 3, pause: 9 };
+const ACTIONS = { launch: 0, abort: 1, restart: 2, manual: 3, pause: 9 };
 const clamp = (value, min, max) =>
   Number.isFinite(value) ? Math.max(min, Math.min(max, value)) : 0;
 

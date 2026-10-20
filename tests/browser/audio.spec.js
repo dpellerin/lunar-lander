@@ -2,6 +2,62 @@ import { test, expect } from "@playwright/test";
 
 import { probeAudio, rms } from "../fixtures/audio.js";
 
+test("touchdown whump sustains while the background hum fades, and restart stops effects", async ({
+  page,
+}) => {
+  await probeAudio(page);
+  await page.goto("/");
+  await page.locator("#audio-unlock").click();
+  await page.evaluate(async () => {
+    const { ArcadeAudio } = await import("/src/audio.js");
+    window.landingAudio = new ArcadeAudio();
+    await window.landingAudio.unlock();
+  });
+  for (const hard of [false, true]) {
+    const samples = await page.evaluate(async (hard) => {
+      const sound = window.landingAudio;
+      sound.update(0, false, true);
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      sound.land(hard);
+      // Reproduce the result-frame updates that previously cut the hum off.
+      const timer = setInterval(() => sound.update(0, false, false), 16);
+      const read = () => {
+        const meter = window.testAudio.meter;
+        const data = new Float32Array(meter.fftSize);
+        meter.getFloatTimeDomainData(data);
+        return {
+          hum: sound.engineGain.gain.value,
+          rms: Math.sqrt(
+            data.reduce((sum, value) => sum + value * value, 0) / data.length,
+          ),
+        };
+      };
+      const samples = [];
+      for (const delay of [60, 200, 340, 850]) {
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        samples.push(read());
+      }
+      clearInterval(timer);
+      return samples;
+    }, hard);
+    expect(samples[0].rms).toBeGreaterThan(0.01);
+    expect(samples[1].rms).toBeGreaterThan(0.005);
+    expect(samples[1].hum).toBeGreaterThan(0.1);
+    expect(samples[2].hum).toBeGreaterThan(0.05);
+    expect(samples[2].hum).toBeLessThan(samples[1].hum);
+    expect(samples[1].hum).toBeLessThan(samples[0].hum);
+    expect(samples[3].hum).toBeLessThan(0.0001);
+    expect(samples[3].rms).toBeLessThan(0.0001);
+  }
+  await page.evaluate(() => {
+    window.landingAudio.crash();
+    window.landingAudio.land(true);
+    window.landingAudio.stopEffects();
+  });
+  await page.waitForTimeout(100);
+  expect(await rms(page)).toBeLessThan(0.0001);
+});
+
 test("sound produces an output signal after launch and cannot be muted by M", async ({
   page,
 }) => {

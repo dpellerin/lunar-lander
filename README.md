@@ -17,6 +17,7 @@ Every round brings a new rocky landscape. Choose from four difficulty levels, ai
 | Thrust              | Space    | Right trigger      |
 | Emergency abort     | A        | B                  |
 | Pause / resume      | P / Esc  | Menu               |
+| Restart game        | R        | X                  |
 | Preferences         | ?        | Y                  |
 
 For an Xbox controller, pair it with your device, then press any button to connect. Release it and press **A** to launch. Squeeze the right trigger to control your thrust.

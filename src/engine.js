@@ -118,6 +118,7 @@ export function createGame({
     result: null,
     resultTime: 0,
     landingBounce: null,
+    landingSettle: null,
     ship: newShip(),
     abortTime: 0,
     abortHeld: false,
@@ -141,6 +142,7 @@ function launch(game) {
   game.result = null;
   game.resultTime = 0;
   game.landingBounce = null;
+  game.landingSettle = null;
   game.abortTime = 0;
   game.abortHeld = false;
   game.accumulator = 0;
@@ -162,6 +164,17 @@ export function nextMission(game) {
   game.mission += 1;
   launch(game);
   return true;
+}
+
+export function restartGame(game) {
+  Object.assign(
+    game,
+    createGame({
+      difficulty: game.difficulty,
+      seed: (game.terrainSeed + 0x9e3779b9) >>> 0,
+    }),
+  );
+  return startGame(game);
 }
 
 export function abortGame(game) {
@@ -244,18 +257,31 @@ const MAX_FRAME = 0.25;
 
 function advanceResult(game, elapsed) {
   game.resultTime += elapsed;
+  const settle = game.landingSettle;
+  if (settle) {
+    const progress = Math.min(1, game.resultTime / settle.duration);
+    // Ease the raised foot down, keeping the lower foot on the flat pad.
+    const ease = progress * progress * (3 - 2 * progress);
+    game.ship.angle = progress === 1 ? 0 : settle.angle * (1 - ease);
+    game.ship.y =
+      settle.padY -
+      11 * Math.cos(game.ship.angle) -
+      9 * Math.abs(Math.sin(game.ship.angle));
+    if (progress === 1) game.landingSettle = null;
+  }
   const bounce = game.landingBounce;
   if (!bounce) return;
   const t = Math.min(game.resultTime, bounce.duration);
   const liftSpeed = (bounce.gravity * bounce.duration) / 2;
   // Use flight gravity: decelerate to zero at the apex, then fall gently.
+  const surfaceY = settle ? game.ship.y : bounce.surfaceY;
   game.ship.y = Math.min(
-    bounce.surfaceY,
-    bounce.surfaceY - liftSpeed * t + 0.5 * bounce.gravity * t * t,
+    surfaceY,
+    surfaceY - liftSpeed * t + 0.5 * bounce.gravity * t * t,
   );
   game.ship.vy = -liftSpeed + bounce.gravity * t;
   if (t === bounce.duration) {
-    game.ship.y = bounce.surfaceY;
+    game.ship.y = surfaceY;
     game.ship.vy = 0;
     game.landingBounce = null;
   }
@@ -341,10 +367,22 @@ function simulateTick(game, input, dt) {
     );
     game.ship.y += contact.gap;
     game.result = evaluateLanding(game.ship, pad);
+    const impactVy = game.ship.vy;
+    if (game.result.kind !== "crash") {
+      const angle = Math.atan2(
+        Math.sin(game.ship.angle),
+        Math.cos(game.ship.angle),
+      );
+      game.ship.angle = angle;
+      game.ship.vx = 0;
+      game.ship.vy = 0;
+      game.ship.angularVelocity = 0;
+      game.landingSettle = { angle, padY: pad.y, duration: 0.9 };
+    }
     if (game.result.kind === "hard") {
-      const height = Math.max(4, Math.min(8, Math.abs(game.ship.vy) * 0.25));
+      const height = Math.max(4, Math.min(8, Math.abs(impactVy) * 0.25));
       game.landingBounce = {
-        surfaceY: game.ship.y,
+        surfaceY: pad.y - 11,
         height,
         gravity,
         duration: 2 * Math.sqrt((2 * height) / gravity),

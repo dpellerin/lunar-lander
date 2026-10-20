@@ -251,9 +251,7 @@ test("Xbox trigger directly controls thrust and stick/D-pad steer the ship", asy
   expect((await diagnostics(page)).ship.throttle).toBe(1);
 });
 
-test("held A does not relaunch after a crash and X cannot add fuel", async ({
-  page,
-}) => {
+test("held A does not relaunch after a crash", async ({ page }) => {
   test.setTimeout(process.env.CI ? 135000 : 45000);
   await setup(page);
   await button(page, 0, 1);
@@ -264,12 +262,36 @@ test("held A does not relaunch after a crash and X cannot add fuel", async ({
   await page.clock.runFor(300);
   expect((await diagnostics(page)).mission).toBe(1);
   await button(page, 0, 0);
-  await button(page, 2, 1);
-  await page.clock.runFor(300);
-  expect((await diagnostics(page)).fuel).toBe(contact.fuel);
-  await button(page, 2, 0);
   await press(page, 0);
   expect((await diagnostics(page)).mission).toBe(2);
+});
+
+test("X restarts from flight and Preferences once per press and waits for neutral inputs", async ({
+  page,
+}) => {
+  await setup(page);
+  await press(page, 0);
+  await button(page, 7, 1);
+  const before = await diagnostics(page);
+  await button(page, 2, 1);
+  const reset = await diagnostics(page);
+  expect(reset.phase).toBe("flying");
+  expect(reset.score).toBe(0);
+  expect(reset.fuel).toBe(750);
+  expect(reset.mission).toBe(1);
+  expect(reset.terrainSeed).not.toBe(before.terrainSeed);
+  expect(reset.ship.throttle).toBe(0);
+  await page.clock.runFor(300);
+  expect((await diagnostics(page)).terrainSeed).toBe(reset.terrainSeed);
+  expect((await diagnostics(page)).fuel).toBe(750);
+  await button(page, 2, 0);
+  await button(page, 7, 0);
+  await press(page, 3);
+  await expect(page.locator("#preferences")).toBeVisible();
+  await press(page, 2);
+  await expect(page.locator("#preferences")).toBeHidden();
+  expect((await diagnostics(page)).terrainSeed).not.toBe(reset.terrainSeed);
+  await expect(page.locator("#restart-key")).toHaveText("X");
 });
 
 test("Menu pauses, held inputs cannot resume, and the manual blocks controller thrust", async ({

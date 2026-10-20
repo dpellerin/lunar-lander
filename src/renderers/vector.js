@@ -222,11 +222,14 @@ export class VectorRenderer {
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.shadowBlur = 0;
-    const sameMission = this.cameraMission === game.mission;
+    const sameMission =
+      this.cameraMission === game.mission &&
+      this.cameraTerrainSeed === game.terrainSeed;
     const previous = sameMission ? this.camera : null;
     const cam = computeCamera(game, w, h, previous);
     this.camera = cam;
     this.cameraMission = game.mission;
+    this.cameraTerrainSeed = game.terrainSeed;
     const project = (x, y) => [
       (x - cam.x) * cam.scale + w / 2,
       (y - cam.y) * cam.scale + h / 2,

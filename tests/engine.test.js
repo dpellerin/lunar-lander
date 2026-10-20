@@ -152,6 +152,45 @@ test("a flight starts with a finite fuel supply and advances under gravity", () 
   assert.equal(game.fuel, 750);
 });
 
+test("restart clears every round state, restores resources and keeps difficulty with new terrain", () => {
+  for (const phase of ["ready", "flying", "result", "gameover"]) {
+    const game = engine.createGame({ difficulty: "prime", seed: 7 });
+    const terrain = structuredClone(game.terrain);
+    Object.assign(game, {
+      phase,
+      score: 350,
+      fuel: 5,
+      time: 80,
+      mission: 4,
+      result: { kind: "hard", points: 30 },
+      resultTime: 2,
+      landingBounce: {},
+      landingSettle: {},
+      abortTime: 1,
+      abortHeld: true,
+      accumulator: 0.004,
+    });
+    assert.equal(engine.restartGame(game), true);
+    assert.equal(game.phase, "flying");
+    assert.equal(game.difficulty, "prime");
+    assert.equal(game.score, 0);
+    assert.equal(game.fuel, 750);
+    assert.equal(game.time, 0);
+    assert.equal(game.mission, 1);
+    assert.equal(game.result, null);
+    assert.equal(game.landingBounce, null);
+    assert.equal(game.landingSettle, null);
+    assert.equal(game.abortTime, 0);
+    assert.equal(game.abortHeld, false);
+    assert.equal(game.accumulator, 0);
+    assert.deepEqual(game.ship, engine.createGame().ship);
+    assert.notDeepEqual(game.terrain, terrain);
+    const nextSeed = game.terrainSeed;
+    engine.restartGame(game);
+    assert.notEqual(game.terrainSeed, nextSeed);
+  }
+});
+
 function fly(game, input = {}, seconds = 1) {
   for (let i = 0; i < Math.round(seconds * 120); i++)
     engine.stepGame(game, input, 1 / 120);
@@ -346,6 +385,50 @@ test("a hard landing makes one small hop and settles without awarding twice or u
     fly(game, {}, 2);
     assert.deepEqual(game.ship, settled, "no second bounce");
   }
+});
+
+test("safe tilted landings ease level without sinking either foot or changing the award", () => {
+  for (const vy of [5, 24]) {
+    for (const tilt of [-0.16, 0.16]) {
+      const game = approach({ vy, angle: 2 * Math.PI + tilt });
+      engine.stepGame(game, {}, 1 / 120);
+      assert.equal(game.result.kind, vy === 5 ? "soft" : "hard");
+      const { score, fuel, time } = game;
+      const padY = game.pads[0].y;
+      let lastAngle = Math.abs(game.ship.angle);
+      assert.ok(lastAngle > 0.1, "tilt settles gradually instead of snapping");
+      for (let i = 0; i < 600; i++) {
+        engine.stepGame(game, {}, 1 / 120);
+        assert.ok(Math.abs(game.ship.angle) <= lastAngle + 1e-10);
+        lastAngle = Math.abs(game.ship.angle);
+        for (const x of [-9, 9]) {
+          const footY =
+            game.ship.y +
+            x * Math.sin(game.ship.angle) +
+            11 * Math.cos(game.ship.angle);
+          assert.ok(
+            footY <= padY + 1e-8,
+            "neither foot passes through the pad",
+          );
+        }
+      }
+      assert.equal(game.ship.angle, 0);
+      assert.equal(game.ship.y, padY - 11);
+      assert.equal(game.ship.vx, 0);
+      assert.equal(game.ship.vy, 0);
+      assert.equal(game.ship.angularVelocity, 0);
+      assert.equal(game.landingSettle, null);
+      assert.equal(game.score, score);
+      assert.equal(game.fuel, fuel);
+      assert.equal(game.time, time);
+      engine.nextMission(game);
+      assert.equal(game.landingSettle, null);
+    }
+  }
+  const crash = approach({ angle: 0.5 });
+  engine.stepGame(crash, {}, 1 / 120);
+  assert.equal(crash.result.kind, "crash");
+  assert.equal(crash.landingSettle, null);
 });
 
 test("hard-landing rebound uses flight gravity and slows through the apex before a gentle fall", () => {

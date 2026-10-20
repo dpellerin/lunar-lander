@@ -52,6 +52,7 @@ test("controller buttons fire once per press, including holds spanning multiple 
   for (const [index, action] of [
     [0, "launch"],
     [1, "abort"],
+    [2, "restart"],
     [3, "manual"],
     [9, "pause"],
   ]) {

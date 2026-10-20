@@ -4,6 +4,7 @@ import {
   startGame,
   stepGame,
   nextMission,
+  restartGame,
   setDifficulty,
   abortGame,
   altitude,
@@ -47,7 +48,7 @@ app.innerHTML = `
     <div class="header-actions"><button id="preferences-button" class="utility" aria-label="Preferences" title="Preferences (?)">⚙</button><button id="fullscreen-button" class="utility" aria-label="Enter fullscreen" title="Enter fullscreen"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path id="fullscreen-icon" d="M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5"/></svg></button></div>
   </header>
   <section id="cockpit" aria-label="Lunar flight simulator">
-    <div class="screen-top"><span id="mission-label">MISSION 01</span></div>
+    <div class="screen-top"><span id="mission-label">MISSION 01</span><button id="restart-button" aria-label="Restart game" title="Restart game (R / controller X)">RESTART <span id="restart-key">R</span></button></div>
     <div id="flight-screen">
       <canvas id="game-canvas" role="img" aria-label="White vector lunar terrain and lander. Flight telemetry is listed above the terrain."></canvas>
       <div class="telemetry telemetry-left" aria-label="Mission telemetry">
@@ -103,6 +104,7 @@ app.innerHTML = `
           <tr><th scope="row">Adjust power</th><td>[ / ]</td><td>RT position</td></tr>
           <tr><th scope="row">Abort</th><td>A</td><td>B</td></tr>
           <tr><th scope="row">Pause / resume</th><td>P / Esc</td><td>Menu</td></tr>
+          <tr><th scope="row">Restart game</th><td>R</td><td>X</td></tr>
           <tr><th scope="row">Preferences</th><td>?</td><td>Y</td></tr>
           <tr><th scope="row">Close preferences</th><td>Esc</td><td>B / Y</td></tr>
           <tr><th scope="row">Fullscreen</th><td>F</td><td>—</td></tr>
@@ -194,6 +196,20 @@ function togglePause() {
   clearInput();
   updateUI();
 }
+function restart() {
+  if (helpOpen) closePreferences();
+  audio.stopEffects();
+  restartGame(game);
+  paused = false;
+  clearInput();
+  suspendController();
+  accumulator = 0;
+  lastTime = performance.now() / 1000;
+  previousPhase = game.phase;
+  unlock();
+  announce("New game started.");
+  updateUI();
+}
 function showPreferences() {
   helpOpen = true;
   suspendController();
@@ -221,6 +237,7 @@ function setThrottle(value) {
   $("#throttle-label").value = `${Math.round(throttle * 100)}%`;
 }
 $("#launch-button").addEventListener("click", launch);
+$("#restart-button").addEventListener("click", restart);
 $("#preferences-button").addEventListener("click", showPreferences);
 $("#close-preferences").addEventListener("click", closePreferences);
 $("#preferences").addEventListener("cancel", (event) => {
@@ -264,6 +281,7 @@ const gameKeys = new Set([
   "Space",
   "KeyA",
   "KeyP",
+  "KeyR",
   "KeyF",
   "Enter",
   "Escape",
@@ -274,13 +292,18 @@ const gameKeys = new Set([
 ]);
 window.addEventListener("keydown", (event) => {
   if (
-    event.target?.id === "audio-unlock" &&
+    ["audio-unlock", "restart-button"].includes(event.target?.id) &&
     (event.code === "Enter" || event.code === "Space")
   )
     return;
   const tag = document.activeElement?.tagName;
-  if (helpOpen) return;
   if (["INPUT", "SELECT", "TEXTAREA"].includes(tag)) return;
+  if (event.code === "KeyR") {
+    event.preventDefault();
+    if (!event.repeat) restart();
+    return;
+  }
+  if (helpOpen) return;
   if (gameKeys.has(event.code)) event.preventDefault();
   keys.add(event.code);
   if (event.repeat) return;
@@ -471,6 +494,7 @@ function updateControllerUI() {
   $("#controller-thrust").hidden = !state.supported;
   $("#controller-meter").value = state.thrust;
   $("#controller-percent").value = `${Math.round(state.thrust * 100)}%`;
+  $("#restart-key").textContent = state.supported ? "X" : "R";
   updateAudioUI();
 }
 
@@ -514,6 +538,10 @@ function pollController() {
     unlock();
   }
   for (const action of controllerState.actions) {
+    if (action === "restart") {
+      restart();
+      break;
+    }
     if (helpOpen) {
       if (action === "manual" || action === "abort" || action === "pause")
         closePreferences();
@@ -558,6 +586,7 @@ function frame(timestamp) {
   if (game.phase !== previousPhase) {
     if (game.result && (game.phase === "result" || game.phase === "gameover")) {
       if (game.result.kind === "crash") audio.crash();
+      else audio.land(game.result.kind === "hard");
       announce(`${game.result.message}. ${game.result.points} points.`);
       clearInput();
       suspendController();

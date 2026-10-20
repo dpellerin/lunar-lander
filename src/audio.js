@@ -40,6 +40,7 @@ export class ArcadeAudio {
   constructor() {
     this.context = null;
     this.lastWarning = -10;
+    this.landingFadeUntil = 0;
   }
   async unlock() {
     if (!this.context || this.context.state === "closed") {
@@ -50,6 +51,7 @@ export class ArcadeAudio {
       this.master = ctx.createGain();
       this.master.gain.value = 0.55;
       this.lastWarning = -10;
+      this.landingFadeUntil = 0;
       this.master.connect(ctx.destination);
       // One complete maximal LFSR period: the loop doesn't introduce a noise seam.
       const length = Math.round((32767 / 12000) * ctx.sampleRate);
@@ -83,11 +85,16 @@ export class ArcadeAudio {
   update(thrust, lowFuel, active) {
     if (!this.context) return;
     const now = this.context.currentTime;
-    this.engineGain.gain.setTargetAtTime(
-      active ? (thrustNoiseLevel(thrust) / 7) * 7.6 * 0.55 : 0,
-      now,
-      0.008,
-    );
+    // A result frame must not overwrite the touchdown fade with an instant mute.
+    if (active || now >= this.landingFadeUntil) {
+      this.landingFadeUntil = 0;
+      this.engineGain.gain.cancelScheduledValues(now);
+      this.engineGain.gain.setTargetAtTime(
+        active ? (thrustNoiseLevel(thrust) / 7) * 7.6 * 0.55 : 0,
+        now,
+        0.008,
+      );
+    }
     if (active && lowFuel && now - this.lastWarning >= 0.78) {
       this.lastWarning = now;
       this.beep(3000, 0.39, 0.022);
@@ -124,5 +131,79 @@ export class ArcadeAudio {
         now + i * 0.1,
       );
     gain.setValueAtTime(0, now + 0.8);
+  }
+  land(hard = false) {
+    if (!this.context || this.context.state !== "running") return;
+    const ctx = this.context,
+      noise = ctx.createBufferSource(),
+      filter = ctx.createBiquadFilter(),
+      soften = ctx.createBiquadFilter(),
+      lowCut = ctx.createBiquadFilter(),
+      body = ctx.createBiquadFilter(),
+      noiseGain = ctx.createGain(),
+      now = ctx.currentTime,
+      duration = hard ? 0.9 : 0.72,
+      volume = hard ? 1.7 : 1.4;
+    // A cushioned low impact, with a rounded attack instead of a sharp knock.
+    noise.buffer = this.rumble.buffer;
+    filter.type = "lowpass";
+    filter.frequency.value = 160;
+    filter.Q.value = 0.5;
+    soften.type = "lowpass";
+    soften.frequency.value = 180;
+    soften.Q.value = 0.5;
+    lowCut.type = "highpass";
+    lowCut.frequency.value = 22;
+    lowCut.Q.value = 0.5;
+    body.type = "lowshelf";
+    body.frequency.value = 95;
+    body.gain.value = 5;
+    noiseGain.gain.setValueAtTime(0, now);
+    noiseGain.gain.linearRampToValueAtTime(volume, now + 0.065);
+    noiseGain.gain.exponentialRampToValueAtTime(volume * 0.7, now + 0.17);
+    noiseGain.gain.exponentialRampToValueAtTime(volume * 0.12, now + 0.35);
+    noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    noise
+      .connect(filter)
+      .connect(soften)
+      .connect(lowCut)
+      .connect(body)
+      .connect(noiseGain)
+      .connect(this.master);
+    const touchdown = {
+      stop: () => {
+        noise.stop();
+      },
+    };
+    this.touchdown = touchdown;
+    noise.onended = () => {
+      noise.disconnect();
+      filter.disconnect();
+      soften.disconnect();
+      lowCut.disconnect();
+      body.disconnect();
+      noiseGain.disconnect();
+      if (this.touchdown === touchdown) this.touchdown = null;
+    };
+    noise.start(now);
+    noise.stop(now + duration + 0.01);
+    // Let the existing engine/background hum wind down underneath the impact.
+    this.landingFadeUntil = now + (hard ? 1.15 : 0.95);
+    const hum = this.engineGain.gain;
+    const level = Math.max(hum.value, (7.6 * 0.55) / 7);
+    hum.cancelScheduledValues(now);
+    hum.setValueAtTime(level, now);
+    hum.linearRampToValueAtTime(0, this.landingFadeUntil);
+  }
+  stopEffects() {
+    if (!this.context) return;
+    const now = this.context.currentTime;
+    for (const gain of [this.engineGain.gain, this.explosionGain.gain]) {
+      gain.cancelScheduledValues(now);
+      gain.setValueAtTime(0, now);
+    }
+    this.touchdown?.stop();
+    this.landingFadeUntil = 0;
+    this.lastWarning = -10;
   }
 }

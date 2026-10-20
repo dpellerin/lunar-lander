@@ -174,6 +174,16 @@ test("renderer retains closeup state on pause and resize, but resets to full lan
   assert.equal(renderer.camera.zoom, 2.5);
   const p = position(g, renderer.camera, 320, 340);
   assert.ok(p.x > 0 && p.x < 1 && p.y > 0 && p.y < 1);
+  g.terrainSeed = 1;
+  renderer.render(g);
+  assert.equal(
+    renderer.camera.mode,
+    "overview",
+    "restart clears the old camera hysteresis",
+  );
+  g.ship.y = 700;
+  renderer.render(g);
+  assert.equal(renderer.camera.mode, "closeup");
   g.mission = 2;
   g.ship.x = 180;
   g.ship.y = 140;

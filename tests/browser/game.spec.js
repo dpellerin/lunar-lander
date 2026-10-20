@@ -1,5 +1,62 @@
 import { test, expect } from "@playwright/test";
 
+test("restart button and R start fresh games from the splash, pause and Preferences", async ({
+  page,
+}) => {
+  await page.clock.install();
+  await page.goto("/");
+  await page.clock.runFor(100);
+  const snapshot = () => page.evaluate(() => window.lunarDiagnostics());
+  await page.getByRole("button", { name: "Prime", exact: true }).click();
+  const initial = await snapshot();
+  await page.getByRole("button", { name: "Restart game", exact: true }).click();
+  await page.clock.runFor(100);
+  const restarted = await snapshot();
+  expect(restarted.phase).toBe("flying");
+  expect(restarted.terrainSeed).not.toBe(initial.terrainSeed);
+  await page.keyboard.down("Space");
+  await page.clock.runFor(500);
+  await page.keyboard.press("P");
+  await page.keyboard.press("R");
+  await page.clock.runFor(100);
+  const reset = await snapshot();
+  expect(reset.paused).toBe(false);
+  expect(reset.phase).toBe("flying");
+  expect(reset.difficulty).toBe("prime");
+  expect(reset.fuel).toBe(750);
+  await expect(page.locator("#time-value")).toHaveText("000");
+  expect(reset.ship.throttle).toBe(0);
+  expect(reset.terrainSeed).not.toBe(restarted.terrainSeed);
+  await page.keyboard.up("Space");
+  await page.getByRole("button", { name: "Preferences", exact: true }).click();
+  await page.keyboard.press("R");
+  await page.clock.runFor(100);
+  await expect(page.locator("#preferences")).toBeHidden();
+  expect((await snapshot()).terrainSeed).not.toBe(reset.terrainSeed);
+  await page.locator("#restart-button").focus();
+  const seedBeforeEnter = (await snapshot()).terrainSeed;
+  await page.keyboard.press("Enter");
+  await page.clock.runFor(100);
+  expect((await snapshot()).terrainSeed).not.toBe(seedBeforeEnter);
+  expect((await snapshot()).paused).toBe(false);
+  for (const width of [320, 390, 844, 1324]) {
+    await page.setViewportSize({ width, height: 800 });
+    const layout = await page.evaluate(() => {
+      const restart = document
+        .querySelector("#restart-button")
+        .getBoundingClientRect();
+      const mission = document
+        .querySelector("#mission-label")
+        .getBoundingClientRect();
+      return {
+        clear: restart.left >= mission.right,
+        overflow: document.documentElement.scrollWidth > innerWidth,
+      };
+    });
+    expect(layout).toEqual({ clear: true, overflow: false });
+  }
+});
+
 test("clean cockpit keeps Preferences and fullscreen, with graphics inside Preferences and no sound switch", async ({
   page,
 }) => {
